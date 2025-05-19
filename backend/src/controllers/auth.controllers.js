@@ -50,16 +50,16 @@ export const login = async (req, res) => {
             return res.status(400).json({message: "All fields are required!"})
         }
         if(password.length < 8) {
-            return res.status(400).json({message: "Wrong password"})
+            return res.status(400).json({message: "Invalid credentials"})
         }
 
         const user = await User.findOne({email})
         if(!user) {
-            return res.status(400).json({message: "User does not exist"})
+            return res.status(400).json({message: "Invalid credentials"})
         }
         const isPasswordCorrect = await bcrypt.compare(password, user.password)
         if(!isPasswordCorrect) {
-            return res.status(400).json({message: "Wrong password"})
+            return res.status(400).json({message: "Invalid credentials"})
         }
         // todo: add this in a util function later
         const token = jwt.sign({email}, process.env.SECRET_KEY, { expiresIn: "7d" })
@@ -77,5 +77,13 @@ export const login = async (req, res) => {
     }
 }
 export const logout = (req, res) => {
-    res.send("Logout")
+    try {
+        res.cookie("token", "", {
+            maxAge: 0,
+        })
+        res.status(200).json({message: "logout successful!"})
+    } catch (error) {
+        console.log("unable to logout", error.message)
+        res.status(500).json({message: "unable to logout" + error.message})
+    }
 }
